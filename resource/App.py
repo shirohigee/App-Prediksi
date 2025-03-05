@@ -46,7 +46,7 @@ def result(start, end, df):
         st.error("Data terlalu sedikit untuk membangun model ARIMA. Pastikan minimal ada 10 data.")
         return
 
-    model = ARIMA(df["Kurs Jual"], order=(1,0,1))
+    model = ARIMA(df["Kurs Jual"], order=(2,0,2))
     model_fit = model.fit()
     forecast = model_fit.forecast(steps=selisih_hari).round(2)
     
@@ -60,8 +60,8 @@ def result(start, end, df):
     st.dataframe(forecast_df[["Prediksi Kurs Jual (Rp.)"]], width=600)
     
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(df.index, df["Kurs Jual"], label="Data Historis", marker='o', linestyle='-')
-    ax.plot(forecast_df.index, forecast_df["Prediksi Kurs Jual"], label="Prediksi", marker='o', linestyle='dashed', color='red')
+    ax.plot(df.index, df["Kurs Jual"], label="Data Historis", marker='o',markersize=1, linestyle='-')
+    ax.plot(forecast_df.index, forecast_df["Prediksi Kurs Jual"], label="Prediksi", marker='o',markersize=1, linestyle='dashed', color='red')
     ax.set_title("Prediksi Kurs Jual dengan ARIMA")
     # ax.set_xlabel("Tanggal")
     ax.set_ylabel("Kurs Jual")
