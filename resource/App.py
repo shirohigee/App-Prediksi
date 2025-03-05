@@ -59,9 +59,10 @@ def result(start, end, df):
     st.subheader(f"Data Prediksi {selisih_hari} Hari Kedepan")
     st.dataframe(forecast_df[["Prediksi Kurs Jual (Rp.)"]], width=600)
     
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(15, 5))
     ax.plot(df.index, df["Kurs Jual"], label="Data Historis", marker='o',markersize=1, linestyle='-')
     ax.plot(forecast_df.index, forecast_df["Prediksi Kurs Jual"], label="Prediksi", marker='o',markersize=1, linestyle='dashed', color='red')
+    ax.grid(True, linestyle='--', alpha=0.6)
     ax.set_title("Prediksi Kurs Jual dengan ARIMA")
     # ax.set_xlabel("Tanggal")
     ax.set_ylabel("Kurs Jual")
