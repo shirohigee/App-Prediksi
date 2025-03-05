@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from statsmodels.tsa.arima.model import ARIMA
 import matplotlib.pyplot as plt
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 # === Fungsi untuk Load Data ===
 def load_data(uploaded_file):
@@ -46,7 +47,7 @@ def result(start, end, df):
         st.error("Data terlalu sedikit untuk membangun model ARIMA. Pastikan minimal ada 10 data.")
         return
 
-    model = ARIMA(df["Kurs Jual"], order=(2,0,2))
+    model = ARIMA(df["Kurs Jual"], order=(7,1,2))
     model_fit = model.fit()
     forecast = model_fit.forecast(steps=selisih_hari).round(2)
     
@@ -64,12 +65,34 @@ def result(start, end, df):
     ax.plot(forecast_df.index, forecast_df["Prediksi Kurs Jual"], label="Prediksi", marker='o',markersize=1, linestyle='dashed', color='red')
     ax.grid(True, linestyle='--', alpha=0.6)
     ax.set_title("Prediksi Kurs Jual dengan ARIMA")
-    # ax.set_xlabel("Tanggal")
     ax.set_ylabel("Kurs Jual")
     ax.legend()
     plt.xticks(rotation=45)
     
     st.pyplot(fig)
+
+    # === Evaluasi Model ===
+    train_size = int(len(df) * 0.8)  # 80% data untuk training
+    train, test = df.iloc[:train_size], df.iloc[train_size:]
+    
+    model_train = ARIMA(train["Kurs Jual"], order=(7,1,2))
+    model_train_fit = model_train.fit()
+    test_forecast = model_train_fit.forecast(steps=len(test))
+    
+    mae = mean_absolute_error(test, test_forecast)
+    mse = mean_squared_error(test, test_forecast)
+    rmse = np.sqrt(mse)
+    
+    # Konversi ke persentase dari nilai rata-rata
+    mean_actual = test.mean()
+    mae_pct = (mae / mean_actual) * 100
+    mse_pct = (mse / mean_actual) * 100
+    rmse_pct = (rmse / mean_actual) * 100
+    
+    st.subheader("Evaluasi Model ARIMA")
+    st.write(f"**Mean Absolute Error (MAE):** {mae_pct.iloc[0]:.2f}%")
+    st.write(f"**Mean Squared Error (MSE):** {mse_pct.iloc[0]:.2f}%")
+    st.write(f"**Root Mean Squared Error (RMSE):** {rmse_pct.iloc[0]:.2f}%")
 
 # === Streamlit App ===
 st.title("Prediksi Kurs Jual Rupiah Terhadap Mata Uang Asing")
