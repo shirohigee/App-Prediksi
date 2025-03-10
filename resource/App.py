@@ -46,7 +46,7 @@ def result(start, end, df):
         st.error("Data terlalu sedikit untuk membangun model ARIMA. Pastikan minimal ada 10 data.")
         return
 
-    model = ARIMA(df["Kurs Jual"], order=(2,0,2))
+    model = ARIMA(df["Kurs Jual"], order=(1,1,1))
     model_fit = model.fit()
     forecast = model_fit.forecast(steps=selisih_hari).round(2)
     
