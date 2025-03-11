@@ -56,7 +56,7 @@ def train_model(df):
 # 📊 Prediksi Kurs Jual Menggunakan ARIMA
 def predict(start, end, df, model_fit):
     selisih_hari = (end - start).days + 1
-    forecast = model_fit.forecast(steps=selisih_hari).squeeze()# Fix error 1D
+    forecast = model_fit.forecast(steps=selisih_hari).to_numpy().ravel()
 
     last_date = df.index[-1]
     forecast_dates = [last_date + pd.Timedelta(days=i) for i in range(1, selisih_hari + 1)]
@@ -77,7 +77,7 @@ def predict(start, end, df, model_fit):
 def evaluate_model(df, model_fit):
     forecast_steps = min(len(df), 30)
     actual = df["Kurs Jual"].iloc[-forecast_steps:]
-    predicted = model_fit.forecast(steps=forecast_steps).squeeze()  # Fix error 1D
+    predicted = model_fit.forecast(steps=forecast_steps).to_numpy().ravel()
 
     mae = mean_absolute_error(actual, predicted)
     rmse = np.sqrt(mean_squared_error(actual, predicted))
@@ -86,7 +86,7 @@ def evaluate_model(df, model_fit):
     st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse:.2f}")
 
 # 💹 Tampilan Utama
-st.title("💹 Prediksi Kurs Jual Rupiah Terhadap Mata Uang Asing")
+st.title("💹 Prediksi Kurs Jual Rupiah Terhadap Mata Uang Amerika Serikat")
 st.markdown("---")
 st.sidebar.header("⚙️ Pengaturan")
 
