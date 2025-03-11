@@ -56,7 +56,7 @@ def train_model(df):
 # 📊 Prediksi Kurs Jual Menggunakan ARIMA
 def predict(start, end, df, model_fit):
     selisih_hari = (end - start).days + 1
-    forecast = model_fit.forecast(steps=selisih_hari).to_numpy().ravel()  # Fix error 1D
+    forecast = model_fit.forecast(steps=selisih_hari).squeeze()# Fix error 1D
 
     last_date = df.index[-1]
     forecast_dates = [last_date + pd.Timedelta(days=i) for i in range(1, selisih_hari + 1)]
