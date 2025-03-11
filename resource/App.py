@@ -21,6 +21,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# 📌 Load Data dari File Excel
 def load_data(uploaded_file):
     if uploaded_file is None:
         return None
@@ -41,19 +42,22 @@ def load_data(uploaded_file):
         st.error(f"Terjadi kesalahan saat membaca file: {e}")
         return None
 
+# 🔥 Train Model ARIMA
 def train_model(df):
     if len(df) < 10:
         st.error("Data terlalu sedikit untuk membangun model ARIMA. Pastikan minimal ada 10 data.")
         return None
     with st.spinner("🔄 Melatih model ARIMA..."):
-            time.sleep(2)
-            model = ARIMA(df["Kurs Jual"], order=(1,1,1))
-            model_fit = model.fit()
+        time.sleep(2)
+        model = ARIMA(df["Kurs Jual"], order=(1,1,1))
+        model_fit = model.fit()
     return model_fit
 
+# 📊 Prediksi Kurs Jual Menggunakan ARIMA
 def predict(start, end, df, model_fit):
     selisih_hari = (end - start).days + 1
-    forecast = model_fit.forecast(steps=selisih_hari).round(2)
+    forecast = model_fit.forecast(steps=selisih_hari).to_numpy().ravel()  # Fix error 1D
+
     last_date = df.index[-1]
     forecast_dates = [last_date + pd.Timedelta(days=i) for i in range(1, selisih_hari + 1)]
     forecast_df = pd.DataFrame({"Tanggal": forecast_dates, "Prediksi Kurs Jual": forecast})
@@ -69,19 +73,24 @@ def predict(start, end, df, model_fit):
     fig.update_layout(title="Prediksi Kurs Jual dengan ARIMA", xaxis_title="Tanggal", yaxis_title="Kurs Jual", hovermode='x unified')
     st.plotly_chart(fig, use_container_width=True)
 
+# 📉 Evaluasi Model
 def evaluate_model(df, model_fit):
     forecast_steps = min(len(df), 30)
     actual = df["Kurs Jual"].iloc[-forecast_steps:]
-    predicted = model_fit.forecast(steps=forecast_steps)
+    predicted = model_fit.forecast(steps=forecast_steps).to_numpy().ravel()  # Fix error 1D
+
     mae = mean_absolute_error(actual, predicted)
     rmse = np.sqrt(mean_squared_error(actual, predicted))
+
     st.metric(label="📊 Mean Absolute Error (MAE)", value=f"{mae:.2f}")
     st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse:.2f}")
 
+# 💹 Tampilan Utama
 st.title("💹 Prediksi Kurs Jual Rupiah Terhadap Mata Uang Asing")
 st.markdown("---")
 st.sidebar.header("⚙️ Pengaturan")
 
+# 📂 Upload File
 uploaded_files = st.sidebar.file_uploader("📂 Pilih File Excel", type=".xlsx")
 
 if uploaded_files is not None:
