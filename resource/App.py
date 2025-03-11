@@ -78,7 +78,7 @@ def predict(start, end, df, model_fit):
 def evaluate_model(df, model_fit):
     forecast_steps = min(len(df), 30)
     actual = df["Kurs Jual"].iloc[-forecast_steps:].to_numpy().ravel()
-    predicted = model_fit.forecast(steps=forecast_steps).to_numpy().ravel()
+    predicted = model_fit.forecast(steps=forecast_steps).ravel()
 
     mae = mean_absolute_error(actual, predicted)
     rmse = np.sqrt(mean_squared_error(actual, predicted))
