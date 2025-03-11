@@ -49,14 +49,15 @@ def train_model(df):
         return None
     with st.spinner("🔄 Melatih model ARIMA..."):
         time.sleep(2)
-        model = ARIMA(df["Kurs Jual"], order=(1,1,1))
+        model = ARIMA(df["Kurs Jual"].values.ravel(), order=(1,1,1))
         model_fit = model.fit()
     return model_fit
 
 # 📊 Prediksi Kurs Jual Menggunakan ARIMA
 def predict(start, end, df, model_fit):
     selisih_hari = (end - start).days + 1
-    forecast = model_fit.forecast(steps=selisih_hari).to_numpy().ravel()
+    forecast = model_fit.forecast(steps=selisih_hari)
+    forecast = np.array(forecast).ravel()
 
     last_date = df.index[-1]
     forecast_dates = [last_date + pd.Timedelta(days=i) for i in range(1, selisih_hari + 1)]
@@ -76,7 +77,7 @@ def predict(start, end, df, model_fit):
 # 📉 Evaluasi Model
 def evaluate_model(df, model_fit):
     forecast_steps = min(len(df), 30)
-    actual = df["Kurs Jual"].iloc[-forecast_steps:]
+    actual = df["Kurs Jual"].iloc[-forecast_steps:].to_numpy().ravel()
     predicted = model_fit.forecast(steps=forecast_steps).to_numpy().ravel()
 
     mae = mean_absolute_error(actual, predicted)
