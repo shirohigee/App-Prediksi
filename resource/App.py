@@ -87,7 +87,7 @@ def evaluate_model(df, model_fit):
     st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse:.2f}")
 
 # 💹 Tampilan Utama
-st.title("💹 Prediksi Kurs Jual Rupiah Terhadap Mata Uang Amerika Serikat")
+st.title("💹 Prediksi Kurs Jual Rupiah Terhadap Dollar Amerika Serikat")
 st.markdown("---")
 st.sidebar.header("⚙️ Pengaturan")
 
