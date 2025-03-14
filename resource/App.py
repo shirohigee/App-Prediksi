@@ -47,7 +47,7 @@ def train_model(df):
     if len(df) < 10:
         st.error("Data terlalu sedikit untuk membangun model ARIMA. Pastikan minimal ada 10 data.")
         return None
-    with st.spinner("🔄 Melatih model ARIMA..."):
+    with st.spinner("🔄 Sedang diproses..."):
         time.sleep(2)
         model = ARIMA(df["Kurs Jual"].values.ravel(), order=(1,1,1))
         model_fit = model.fit()
