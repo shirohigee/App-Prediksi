@@ -2,24 +2,10 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from statsmodels.tsa.arima.model import ARIMA
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from sklearn.metrics import mean_absolute_error, mean_squared_error
-import time
 
 st.set_page_config(page_title="Prediksi Kurs Jual Rupiah", layout="wide", page_icon="💰")
-
-st.markdown(
-    """
-    <style>
-        .stApp {background-color: #F8F9FA;}
-        .sidebar .sidebar-content {background-color: #FF6F61; color: white;}
-        .stButton>button {background-color: #28A745; color: white; font-weight: bold; border-radius: 8px;}
-        .stButton>button:hover {background-color: #218838;}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 # 📌 Load Data dari File Excel
 def load_data(uploaded_file):
@@ -42,16 +28,41 @@ def load_data(uploaded_file):
         st.error(f"Terjadi kesalahan saat membaca file: {e}")
         return None
 
-# 🔥 Train Model ARIMA
-def train_model(df):
-    if len(df) < 10:
-        st.error("Data terlalu sedikit untuk membangun model ARIMA. Pastikan minimal ada 10 data.")
-        return None
-    with st.spinner("🔄 Sedang diproses..."):
-        time.sleep(2)
-        model = ARIMA(df["Kurs Jual"].values.ravel(), order=(1,1,1))
+# 🔥 Fungsi Train Model dengan Train-Test Split dan Walk-Forward Validation
+def train_and_evaluate_model(df):
+    if len(df) < 20:
+        st.error("Data terlalu sedikit untuk membangun model ARIMA. Pastikan minimal ada 20 data.")
+        return None, None, None
+
+    # Pisahkan Data (80% Train - 20% Test)
+    train_size = int(len(df) * 0.8)
+    train, test = df.iloc[:train_size], df.iloc[train_size:]
+
+    # Latih Model ARIMA
+    model = ARIMA(train['Kurs Jual'], order=(1, 1, 1))
+    model_fit = model.fit()
+
+    # Walk-Forward Validation
+    history = list(train['Kurs Jual'])
+    predictions = []
+    actual_values = list(test['Kurs Jual'])
+
+    for t in range(len(test)):
+        model = ARIMA(history, order=(1, 1, 1))
         model_fit = model.fit()
-    return model_fit
+        yhat = model_fit.forecast()[0]
+        predictions.append(yhat)
+        history.append(actual_values[t])
+
+    # Hitung Error
+    mae = float(mean_absolute_error(actual_values, predictions))
+    rmse = float(np.sqrt(mean_squared_error(actual_values, predictions)))
+    mean_actual = np.mean(actual_values)
+    mae_percentage = (mae / mean_actual) * 100
+    rmse_percentage = (rmse / mean_actual) * 100
+
+
+    return model_fit, mae, rmse, mae_percentage, rmse_percentage
 
 # 📊 Prediksi Kurs Jual Menggunakan ARIMA
 def predict(start, end, df, model_fit):
@@ -75,16 +86,11 @@ def predict(start, end, df, model_fit):
     st.plotly_chart(fig, use_container_width=True)
 
 # 📉 Evaluasi Model
-def evaluate_model(df, model_fit):
-    forecast_steps = min(len(df), 30)
-    actual = df["Kurs Jual"].iloc[-forecast_steps:].to_numpy().ravel()
-    predicted = model_fit.forecast(steps=forecast_steps).ravel()
-
-    mae = mean_absolute_error(actual, predicted)
-    rmse = np.sqrt(mean_squared_error(actual, predicted))
-
+def evaluate_model(mae, rmse, mae_percentage):
     st.metric(label="📊 Mean Absolute Error (MAE)", value=f"{mae:.2f}")
     st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse:.2f}")
+    st.metric(label="📊 MAE dalam Persentase", value=f"{mae_percentage:.1f}%")
+    st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse_percentage:.1f}%")
 
 # 💹 Tampilan Utama
 st.title("💹 Prediksi Kurs Jual Rupiah Terhadap Dollar Amerika Serikat")
@@ -92,33 +98,39 @@ st.markdown("---")
 st.sidebar.header("⚙️ Pengaturan")
 
 # 📂 Upload File
-uploaded_files = st.sidebar.file_uploader("📂 Pilih File Excel", type=".xlsx")
+uploaded_file = st.sidebar.file_uploader("📂 Pilih File Excel", type=".xlsx")
 
-if uploaded_files is not None:
-    df = load_data(uploaded_files)
+if uploaded_file is not None:
+    df = load_data(uploaded_file)
 
     if df is None or df.empty:
         st.error("File tidak valid atau tidak mengandung data yang diperlukan.")
     else:
+        st.session_state["df"] = df  # Simpan Data di Session State
         with st.expander("📌 Data yang Diupload", expanded=True):
             st.dataframe(df, width=800, height=400)
-        
-        model_fit = train_model(df)
-        if model_fit:
-            evaluate_model(df, model_fit)
-            start_date = df.index[-1] if not df.empty else None
-            start = st.sidebar.date_input("📅 Tanggal Mulai", value=start_date, disabled=True)
-            end = st.sidebar.date_input("📅 Tanggal Selesai", value=None)
-            start = pd.to_datetime(start)
-            end = pd.to_datetime(end) if end else None
-            
-            button = st.sidebar.button("🔮 Prediksi!", type="primary")
 
-            if button:
-                if end is not None:
-                    if end > start:
-                        predict(start, end, df, model_fit)
-                    else:
-                        st.warning("Tanggal selesai harus lebih besar dari tanggal mulai!")
+# 🔮 Tombol Prediksi
+if "df" in st.session_state:
+    df = st.session_state["df"]
+    start_date = df.index[-1]
+    start = st.sidebar.date_input("📅 Tanggal Mulai", value=start_date, disabled=True)
+    end = st.sidebar.date_input("📅 Tanggal Selesai", value=None)
+    button = st.sidebar.button("🔮 Prediksi!", type="primary")
+
+    if button:
+        if end is not None:
+            if end > start:
+                # Latih Model Saat Tombol Ditekan
+                with st.spinner("🔄 Melatih Model..."):
+                    model_fit, mae, rmse, mae_percentage,rmse_percentage = train_and_evaluate_model(df)
+
+                if model_fit is not None:
+                    evaluate_model(mae, rmse, mae_percentage)
+                    predict(start, end, df, model_fit)
                 else:
-                    st.warning("Isi terlebih dahulu tanggal selesai!")
+                    st.error("Model gagal dilatih. Pastikan data cukup.")
+            else:
+                st.warning("Tanggal selesai harus lebih besar dari tanggal mulai!")
+        else:
+            st.warning("Isi terlebih dahulu tanggal selesai!")
