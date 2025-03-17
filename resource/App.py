@@ -86,11 +86,11 @@ def predict(start, end, df, model_fit):
     st.plotly_chart(fig, use_container_width=True)
 
 # 📉 Evaluasi Model
-def evaluate_model(mae, rmse, mae_percentage):
-    st.metric(label="📊 Mean Absolute Error (MAE)", value=f"{mae:.2f}")
-    st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse:.2f}")
-    st.metric(label="📊 MAE dalam Persentase", value=f"{mae_percentage:.1f}%")
-    st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse_percentage:.1f}%")
+def evaluate_model(mae, rmse, mae_percentage, rmse_percentage):
+    # st.metric(label="📊 Mean Absolute Error (MAE)", value=f"{mae:.2f}")
+    # st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse:.2f}")
+    st.metric(label="📊 MAE dalam Persentase", value=f"{mae_percentage:.5f}")
+    st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse_percentage:.5f}")
 
 # 💹 Tampilan Utama
 st.title("💹 Prediksi Kurs Jual Rupiah Terhadap Dollar Amerika Serikat")
@@ -126,7 +126,7 @@ if "df" in st.session_state:
                     model_fit, mae, rmse, mae_percentage,rmse_percentage = train_and_evaluate_model(df)
 
                 if model_fit is not None:
-                    evaluate_model(mae, rmse, mae_percentage)
+                    evaluate_model(mae, rmse, mae_percentage,rmse_percentage)
                     predict(start, end, df, model_fit)
                 else:
                     st.error("Model gagal dilatih. Pastikan data cukup.")
