@@ -39,7 +39,7 @@ def train_and_evaluate_model(df):
     train, test = df.iloc[:train_size], df.iloc[train_size:]
 
     # Latih Model ARIMA
-    model = ARIMA(train['Kurs Jual'], order=(1, 1, 1))
+    model = ARIMA(train['Kurs Jual'], order=(2, 1, 2))
     model_fit = model.fit()
 
     # Walk-Forward Validation
@@ -48,7 +48,7 @@ def train_and_evaluate_model(df):
     actual_values = list(test['Kurs Jual'])
 
     for t in range(len(test)):
-        model = ARIMA(history, order=(1, 1, 1))
+        model = ARIMA(history, order=(2, 1, 2))
         model_fit = model.fit()
         yhat = model_fit.forecast()[0]
         predictions.append(yhat)
