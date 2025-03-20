@@ -89,8 +89,8 @@ def predict(start, end, df, model_fit):
 def evaluate_model(mae, rmse, mae_percentage, rmse_percentage):
     # st.metric(label="📊 Mean Absolute Error (MAE)", value=f"{mae:.2f}")
     # st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse:.2f}")
-    st.metric(label="📊 MAE Mean Absolute Error", value=f"{mae_percentage:.4f}%")
-    st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse_percentage:.4f}%")
+    st.metric(label="📊 MAE Mean Absolute Error", value=f"{mae_percentage:.4f}")
+    st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse_percentage:.4f}")
 
 # 💹 Tampilan Utama
 st.title("💹 Prediksi Kurs Jual Rupiah Terhadap Dollar Amerika Serikat")
