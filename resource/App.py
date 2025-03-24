@@ -74,7 +74,7 @@ def predict(start, end, df, model_fit):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=df.index, y=df["Kurs Jual"], mode='lines+markers', name='Data Historis', line=dict(color='blue')))
     fig.add_trace(go.Scatter(x=forecast_df.index, y=forecast_df["Prediksi Kurs Jual"], mode='lines+markers', name='Prediksi', line=dict(color='red', dash='dash')))
-    fig.update_layout(title="Prediksi Kurs Jual dengan ARIMA", xaxis_title="Tanggal", yaxis_title="Kurs Jual", hovermode='x unified')
+    fig.update_layout(title="Tren Kurs Rupiah", xaxis_title="Tanggal", yaxis_title="Kurs Jual", hovermode='x unified')
     st.plotly_chart(fig, use_container_width=True)
 
 # 📉 Evaluasi Model
