@@ -5,12 +5,10 @@ from statsmodels.tsa.arima.model import ARIMA
 import plotly.graph_objects as go
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-st.set_page_config(page_title="Prediksi Kurs Jual Rupiah", layout="wide", page_icon="💰")
+st.set_page_config(page_title="App-Predict", layout="wide", page_icon="💰")
 
 # 📌 Load Data dari File Excel
 def load_data(uploaded_file):
-    if uploaded_file is None:
-        return None
     try:
         df = pd.read_excel(uploaded_file)
         df = df.iloc[3:].reset_index(drop=True)
@@ -23,6 +21,11 @@ def load_data(uploaded_file):
         df = df.dropna(subset=["Kurs Jual"])
         df.set_index("Tanggal", inplace=True)
         df.sort_index(ascending=True, inplace=True)
+        
+        if len(df) < 1500:
+            st.error("Data terlalu sedikit untuk diproses. Pastikan minimal ada 1500 data.")
+            return None
+        
         return df
     except Exception as e:
         st.error(f"Terjadi kesalahan saat membaca file: {e}")
@@ -30,19 +33,12 @@ def load_data(uploaded_file):
 
 # 🔥 Fungsi Train Model dengan Train-Test Split dan Walk-Forward Validation
 def train_and_evaluate_model(df):
-    if len(df) < 20:
-        st.error("Data terlalu sedikit untuk membangun model ARIMA. Pastikan minimal ada 20 data.")
-        return None, None, None
-
-    # Pisahkan Data (80% Train - 20% Test)
     train_size = int(len(df) * 0.8)
     train, test = df.iloc[:train_size], df.iloc[train_size:]
 
-    # Latih Model ARIMA
     model = ARIMA(train['Kurs Jual'], order=(2, 1, 2))
     model_fit = model.fit()
 
-    # Walk-Forward Validation
     history = list(train['Kurs Jual'])
     predictions = []
     actual_values = list(test['Kurs Jual'])
@@ -54,15 +50,11 @@ def train_and_evaluate_model(df):
         predictions.append(yhat)
         history.append(actual_values[t])
 
-    # Hitung Error
     mae = float(mean_absolute_error(actual_values, predictions))
-    rmse = float(np.sqrt(mean_squared_error(actual_values, predictions)))
     mean_actual = np.mean(actual_values)
     mae_percentage = (mae / mean_actual) * 100
-    rmse_percentage = (rmse / mean_actual) * 100
 
-
-    return model_fit, mae, rmse, mae_percentage, rmse_percentage
+    return model_fit, mae_percentage
 
 # 📊 Prediksi Kurs Jual Menggunakan ARIMA
 def predict(start, end, df, model_fit):
@@ -86,51 +78,231 @@ def predict(start, end, df, model_fit):
     st.plotly_chart(fig, use_container_width=True)
 
 # 📉 Evaluasi Model
-def evaluate_model(mae, rmse, mae_percentage, rmse_percentage):
-    # st.metric(label="📊 Mean Absolute Error (MAE)", value=f"{mae:.2f}")
-    # st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse:.2f}")
-    st.metric(label="📊 MAE Mean Absolute Error", value=f"{mae_percentage:.4f}")
-    st.metric(label="📉 Root Mean Squared Error (RMSE)", value=f"{rmse_percentage:.4f}")
+def evaluate_model(mae_percentage):
+    col1, col2, col3 = st.columns([1, 2, 2])
+    
+    with col1:
+        st.markdown(f"""
+        <style>
+            .metric-card {{
+                background: #FBF8EF;
+                padding: 15px;
+                border-radius: 10px;
+                box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
+                text-align: center;
+                width: 250px;
+                margin: auto;
+                transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            }}
+
+            .metric-card:hover {{
+                transform: translateY(-5px);
+                box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.3);
+            }}
+
+            .metric-title {{
+                font-size: 18px;
+                font-weight: bold;
+                color: black;
+                margin-bottom: 5px;
+            }}
+
+            .metric-value {{
+                font-size: 24px;
+                font-weight: bold;
+                color: #FFB433;
+            }}
+        </style>
+
+        <div class="metric-card">
+            <div class="metric-title">MAE (Mean Absolute Error)</div>
+            <div class="metric-value">{mae_percentage:.4f}%</div>
+        </div>
+    """, unsafe_allow_html=True)
+
 
 # 💹 Tampilan Utama
-st.title("💹 Prediksi Kurs Jual Rupiah Terhadap Dollar Amerika Serikat")
+st.markdown("""
+    <style>
+        .card-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .card {
+            background: #FBF8EF;
+            padding: 20px;
+            width: 60%; 
+            max-width: 1000px; 
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            text-align: center;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .title {
+            font-size: 28px; 
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .highlight {
+            color: #FFB433;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                width: 90%; 
+            }
+            .title {
+                font-size: 24px; 
+            }
+        }
+    </style>
+
+    <div class="card-container">
+        <div class="card">
+            <h1 class="title">
+                Bersiap untuk Masa Depan! <br> 
+                <span class="highlight">Lihat Tren Kurs Rupiah</span> dengan Model Prediksi Canggih! 🚀
+            </h1>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
+
 st.markdown("---")
-st.sidebar.header("⚙️ Pengaturan")
+
+st.markdown(
+    """
+    <style>
+        section[data-testid="stSidebar"] {
+            background-color: #80CBC4;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.2);
+            border-right: 5px solid #B4EBE6 !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown("""
+    <style>
+        @keyframes bounce {
+            0% { transform: translateY(-5px); opacity: 1; }
+            50% { transform: translateY(5px); opacity: 1; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        div[data-testid="stAlert"] {
+            background-color: #B4EBE6 !important;
+            border-left: 5px solid #FFB433 !important;
+            border-radius: 10px;
+            box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
+            animation: bounce 1.5s ease-in-out infinite alternate;
+        }
+
+        div[data-testid="stAlert"] p {
+            color: black !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 
 # 📂 Upload File
-uploaded_file = st.sidebar.file_uploader("📂 Pilih File Excel", type=".xlsx")
+uploaded_file = st.sidebar.file_uploader("📂 Pilih File Excel", type=".xlsx", help="Pastikan file yang diunggah dalam format .xlsx dengan data kurs jual rupiah.")
 
-if uploaded_file is not None:
-    df = load_data(uploaded_file)
+if uploaded_file is None:
+    st.info("**Siapkan data historismu terlebih dahulu...** \n Kamu bisa mengambilnya dari situs resmi Bank Indonesia: [Kurs BI](https://www.bi.go.id/id/statistik/informasi-kurs/transaksi-bi/default.aspx)", icon="💡")
+    st.stop()
 
-    if df is None or df.empty:
-        st.error("File tidak valid atau tidak mengandung data yang diperlukan.")
+df = load_data(uploaded_file)
+
+if df is None or df.empty:
+    st.stop()
+
+with st.sidebar.expander("📌 Data yang Diupload", expanded=True):
+    st.sidebar.dataframe(df, width=900, height=400)
+
+
+today = pd.Timestamp.today().date()
+last_data_date = df.index[-1].date()
+
+if today > last_data_date:
+    start_date = today  
+else:
+    start_date = last_data_date 
+# 📅 Input Tanggal untuk Prediksi
+start = st.sidebar.date_input("📅 Tanggal Mulai", value=start_date, disabled=True)
+end = st.sidebar.date_input("📅 Tanggal Selesai", value=None, min_value=start_date + pd.Timedelta(days=1))
+
+if st.sidebar.button("🔮 Prediksi!", type="primary", use_container_width=True):
+    if end is None:
+        st.warning("Silakan pilih tanggal selesai terlebih dahulu.")
+    elif end <= start:
+        st.warning("Tanggal selesai harus lebih besar dari tanggal mulai!")
     else:
-        st.session_state["df"] = df  # Simpan Data di Session State
-        with st.expander("📌 Data yang Diupload", expanded=True):
-            st.dataframe(df, width=800, height=400)
+        loading_placeholder = st.empty()
+        loading_placeholder.markdown("""
+            <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
 
-# 🔮 Tombol Prediksi
-if "df" in st.session_state:
-    df = st.session_state["df"]
-    start_date = df.index[-1]
-    start = st.sidebar.date_input("📅 Tanggal Mulai", value=start_date, disabled=True)
-    end = st.sidebar.date_input("📅 Tanggal Selesai", value=None)
-    button = st.sidebar.button("🔮 Prediksi!", type="primary")
+            @keyframes pulse {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1); opacity: 0.6; }
+                100% { transform: scale(1); opacity: 1; }
+            }
 
-    if button:
-        if end is not None:
-            if end > start:
-                # Latih Model Saat Tombol Ditekan
-                with st.spinner("🔄 Melatih Model..."):
-                    model_fit, mae, rmse, mae_percentage,rmse_percentage = train_and_evaluate_model(df)
+            .loading-container {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                font-weight: bold;
+                color: #ffffff;
+                background-color: #ff4b4b;
+                padding: 10px 20px;
+                border-radius: 10px;
+                box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
+                width: 300px;
+                margin: auto;
+            }
 
-                if model_fit is not None:
-                    evaluate_model(mae, rmse, mae_percentage,rmse_percentage)
-                    predict(start, end, df, model_fit)
-                else:
-                    st.error("Model gagal dilatih. Pastikan data cukup.")
-            else:
-                st.warning("Tanggal selesai harus lebih besar dari tanggal mulai!")
+            .loading-icon {
+                display: inline-block;
+                margin-right: 10px;
+                width: 20px;
+                height: 20px;
+                border: 3px solid white;
+                border-top: 3px solid transparent;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+            .loading-text {
+                display: inline-block;
+                animation: pulse 2s ease-in-out infinite;
+            }
+            </style>
+
+            <div class="loading-container">
+                <div class="loading-icon"></div>
+                <div class="loading-text">Tunggu Sebentar...</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        model_fit, mae_percentage = train_and_evaluate_model(df)
+        
+        if model_fit is not None:
+            loading_placeholder.empty()
+            evaluate_model(mae_percentage)
+            predict(start, end, df, model_fit)
         else:
-            st.warning("Isi terlebih dahulu tanggal selesai!")
+            st.error("Model gagal dilatih. Pastikan data cukup.")
