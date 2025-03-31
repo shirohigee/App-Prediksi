@@ -115,7 +115,7 @@ def evaluate_model(mae_percentage):
         </style>
 
         <div class="metric-card">
-            <div class="metric-title">MAE (Mean Absolute Error)</div>
+            <div class="metric-title">MAPE (Mean Absolute Persentage Error)</div>
             <div class="metric-value">{mae_percentage:.4f}%</div>
         </div>
     """, unsafe_allow_html=True)
