@@ -28,7 +28,7 @@ def load_data(uploaded_file):
         
         return df
     except Exception as e:
-        st.error(f"Terjadi kesalahan saat membaca file: {e}")
+        st.error(f"Data harus sesuai format Bank Indonesia...")
         return None
 
 # 🔥 Fungsi Train Model dengan Train-Test Split dan Walk-Forward Validation
@@ -51,10 +51,11 @@ def train_and_evaluate_model(df):
         history.append(actual_values[t])
 
     mae = float(mean_absolute_error(actual_values, predictions))
+    rmse = float(np.sqrt(mean_squared_error(actual_values, predictions)))
     mean_actual = np.mean(actual_values)
-    mae_percentage = (mae / mean_actual) * 100
+    mape_percentage = (mae / mean_actual) * 100
 
-    return model_fit, mae_percentage
+    return model_fit, mae, rmse,mape_percentage
 
 # 📊 Prediksi Kurs Jual Menggunakan ARIMA
 def predict(start, end, df, model_fit):
@@ -78,13 +79,12 @@ def predict(start, end, df, model_fit):
     st.plotly_chart(fig, use_container_width=True)
 
 # 📉 Evaluasi Model
-def evaluate_model(mae_percentage):
-    col1, col2, col3 = st.columns([1, 2, 2])
+def evaluate_model(mae,rmse,mape_percentage):
+    col1, col2, col3 = st.columns([1, 1, 1])
     
-    with col1:
-        st.markdown(f"""
+    metric_card_style = """
         <style>
-            .metric-card {{
+            .metric-card {
                 background: #FBF8EF;
                 padding: 15px;
                 border-radius: 10px;
@@ -93,32 +93,53 @@ def evaluate_model(mae_percentage):
                 width: 250px;
                 margin: auto;
                 transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            }}
+            }
 
-            .metric-card:hover {{
+            .metric-card:hover {
                 transform: translateY(-5px);
                 box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.3);
-            }}
+            }
 
-            .metric-title {{
+            .metric-title {
                 font-size: 18px;
                 font-weight: bold;
                 color: black;
                 margin-bottom: 5px;
-            }}
+            }
 
-            .metric-value {{
+            .metric-value {
                 font-size: 24px;
                 font-weight: bold;
                 color: #FFB433;
-            }}
+            }
         </style>
-
+    """
+    
+    st.markdown(metric_card_style, unsafe_allow_html=True)
+    
+    with col1:
+        st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-title">MAPE (Mean Absolute Persentage Error)</div>
-            <div class="metric-value">{mae_percentage:.4f}%</div>
+            <div class="metric-title">MAE (Mean Absolute Error)</div>
+            <div class="metric-value">{mae:.4f}</div>
         </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">RMSE (Root Mean Squared Error)</div>
+            <div class="metric-value">{rmse:.4f}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">MAPE (Mean Absolute Percentage Error)</div>
+            <div class="metric-value">{mape_percentage:.4f}%</div>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 # 💹 Tampilan Utama
@@ -298,11 +319,11 @@ if st.sidebar.button("🔮 Prediksi!", type="primary", use_container_width=True)
             </div>
         """, unsafe_allow_html=True)
 
-        model_fit, mae_percentage = train_and_evaluate_model(df)
+        model_fit, mae, rmse, mape_percentage = train_and_evaluate_model(df)
         
         if model_fit is not None:
             loading_placeholder.empty()
-            evaluate_model(mae_percentage)
+            evaluate_model(mae,rmse,mape_percentage)
             predict(start, end, df, model_fit)
         else:
             st.error("Model gagal dilatih. Pastikan data cukup.")
