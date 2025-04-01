@@ -267,63 +267,12 @@ if st.sidebar.button("🔮 Prediksi!", type="primary", use_container_width=True)
     elif end <= start:
         st.warning("Tanggal selesai harus lebih besar dari tanggal mulai!")
     else:
-        loading_placeholder = st.empty()
-        loading_placeholder.markdown("""
-            <style>
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-
-            @keyframes pulse {
-                0% { transform: scale(1); opacity: 1; }
-                50% { transform: scale(1); opacity: 0.6; }
-                100% { transform: scale(1); opacity: 1; }
-            }
-
-            .loading-container {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 18px;
-                font-weight: bold;
-                color: #ffffff;
-                background-color: #ff4b4b;
-                padding: 10px 20px;
-                border-radius: 10px;
-                box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
-                width: 300px;
-                margin: auto;
-            }
-
-            .loading-icon {
-                display: inline-block;
-                margin-right: 10px;
-                width: 20px;
-                height: 20px;
-                border: 3px solid white;
-                border-top: 3px solid transparent;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            }
-
-            .loading-text {
-                display: inline-block;
-                animation: pulse 2s ease-in-out infinite;
-            }
-            </style>
-
-            <div class="loading-container">
-                <div class="loading-icon"></div>
-                <div class="loading-text">Tunggu Sebentar...</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-        model_fit, mae, rmse, mape_percentage = train_and_evaluate_model(df)
+        
+        with st.spinner("Memproses prediksi..."):
+            model_fit, mae, rmse, mape_percentage = train_and_evaluate_model(df)
         
         if model_fit is not None:
-            loading_placeholder.empty()
-            evaluate_model(mae,rmse,mape_percentage)
+            evaluate_model(mae, rmse, mape_percentage)
             predict(start, end, df, model_fit)
         else:
             st.error("Model gagal dilatih. Pastikan data cukup.")
