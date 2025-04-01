@@ -23,7 +23,7 @@ def load_data(uploaded_file):
         df.set_index("Tanggal", inplace=True)
         df.sort_index(ascending=True, inplace=True)
         
-        if len(df) < 10:
+        if len(df) < 1000:
             st.error("Data terlalu sedikit untuk diproses. Pastikan minimal ada 1000 data.")
             return None
         
