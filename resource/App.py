@@ -8,6 +8,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 st.set_page_config(page_title="App-Predict", layout="wide", page_icon="💰")
 
 # 📌 Load Data dari File Excel
+@st.cache_data
 def load_data(uploaded_file):
     try:
         df = pd.read_excel(uploaded_file)
@@ -22,7 +23,7 @@ def load_data(uploaded_file):
         df.set_index("Tanggal", inplace=True)
         df.sort_index(ascending=True, inplace=True)
         
-        if len(df) < 1000:
+        if len(df) < 10:
             st.error("Data terlalu sedikit untuk diproses. Pastikan minimal ada 1000 data.")
             return None
         
@@ -31,6 +32,7 @@ def load_data(uploaded_file):
         st.error(f"Data harus sesuai format Bank Indonesia...")
         return None
 
+@st.cache_resource
 # 🔥 Fungsi Train Model dengan Train-Test Split dan Walk-Forward Validation
 def train_and_evaluate_model(df):
     train_size = int(len(df) * 0.8)
@@ -267,10 +269,8 @@ if st.sidebar.button("🔮 Prediksi!", type="primary", use_container_width=True)
     elif end <= start:
         st.warning("Tanggal selesai harus lebih besar dari tanggal mulai!")
     else:
-        
-        with st.spinner("Memproses prediksi..."):
-            model_fit, mae, rmse, mape_percentage = train_and_evaluate_model(df)
-        
+        model_fit, mae, rmse, mape_percentage = train_and_evaluate_model(df)
+    
         if model_fit is not None:
             evaluate_model(mae, rmse, mape_percentage)
             predict(start, end, df, model_fit)
