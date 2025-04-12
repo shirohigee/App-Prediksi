@@ -15,21 +15,22 @@ def load_data(uploaded_file):
         df = df.iloc[3:].reset_index(drop=True)
         df.columns = ["NO", "Nilai", "Kurs Jual", "Kurs Beli", "Tanggal"]
         df = df[["Tanggal", "Kurs Jual"]]
-        df["Tanggal"] = pd.to_datetime(df["Tanggal"], errors='coerce')
+        df["Tanggal"] = pd.to_datetime(df["Tanggal"], format="%m/%d/%Y %I:%M:%S %p", errors='coerce')
         df = df.dropna(subset=["Tanggal"])
         df["Kurs Jual"] = df["Kurs Jual"].astype(str).str.replace(r"[^\d.]", "", regex=True)
         df["Kurs Jual"] = pd.to_numeric(df["Kurs Jual"], errors='coerce')
         df = df.dropna(subset=["Kurs Jual"])
         df.set_index("Tanggal", inplace=True)
         df.sort_index(ascending=True, inplace=True)
+        df = df.asfreq('D')
+        df["Kurs Jual"] = df["Kurs Jual"].interpolate(method='linear')
         
         if len(df) < 1000:
-            st.error("Data terlalu sedikit untuk diproses. Pastikan minimal ada 1000 data.")
+            st.warning("Data terlalu sedikit untuk diproses. Pastikan minimal ada 1000 data.")
             return None
-        
         return df
     except Exception as e:
-        st.error(f"Data harus sesuai format Bank Indonesia...")
+        st.warning(f"Data harus sesuai format Bank Indonesia...")
         return None
 
 @st.cache_resource
@@ -38,7 +39,7 @@ def train_and_evaluate_model(df):
     train_size = int(len(df) * 0.8)
     train, test = df.iloc[:train_size], df.iloc[train_size:]
 
-    model = ARIMA(train['Kurs Jual'], order=(2, 1, 2))
+    model = ARIMA(train['Kurs Jual'], order=(2, 1, 2), enforce_stationarity=False, enforce_invertibility=False)
     model_fit = model.fit()
 
     history = list(train['Kurs Jual'])
@@ -46,7 +47,7 @@ def train_and_evaluate_model(df):
     actual_values = list(test['Kurs Jual'])
 
     for t in range(len(test)):
-        model = ARIMA(history, order=(2, 1, 2))
+        model = ARIMA(history, order=(2, 1, 2),enforce_stationarity=False, enforce_invertibility=False)
         model_fit = model.fit()
         yhat = model_fit.forecast()[0]
         predictions.append(yhat)
@@ -87,7 +88,7 @@ def evaluate_model(mae,rmse,mape_percentage):
     metric_card_style = """
         <style>
             .metric-card {
-                background: #FBF8EF;
+                background: #FEF3E2;
                 padding: 15px;
                 border-radius: 10px;
                 box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
@@ -112,7 +113,7 @@ def evaluate_model(mae,rmse,mape_percentage):
             .metric-value {
                 font-size: 24px;
                 font-weight: bold;
-                color: #FFB433;
+                color: #FA4032;
             }
         </style>
     """
@@ -143,6 +144,7 @@ def evaluate_model(mae,rmse,mape_percentage):
         </div>
         """, unsafe_allow_html=True)
 
+    
 
 # 💹 Tampilan Utama
 st.markdown("""
@@ -153,7 +155,7 @@ st.markdown("""
         }
 
         .card {
-            background: #FBF8EF;
+            background: #FEF3E2;
             padding: 20px;
             width: 60%; 
             max-width: 1000px; 
@@ -170,12 +172,11 @@ st.markdown("""
 
         .title {
             font-size: 28px; 
-            font-weight: bold;
             margin: 0;
         }
 
         .highlight {
-            color: #FFB433;
+            color: #FA4032;
         }
 
         @media (max-width: 600px) {
@@ -198,15 +199,13 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-st.markdown("---")
-
 st.markdown(
     """
     <style>
         section[data-testid="stSidebar"] {
-            background-color: #80CBC4;
+            background-color: #FAB12F;
             box-shadow: 4px 0 10px rgba(0, 0, 0, 0.2);
-            border-right: 5px solid #B4EBE6 !important;
+            border-right: 1px solid #FA812F;
         }
     </style>
     """,
@@ -216,31 +215,31 @@ st.markdown(
 st.markdown("""
     <style>
         @keyframes bounce {
-            0% { transform: translateY(-5px); opacity: 1; }
-            50% { transform: translateY(5px); opacity: 1; }
+            0% { transform: translateY(0); opacity: 1; }
+            50% { transform: translateY(-2px); opacity: 1; }
             100% { transform: translateY(0); opacity: 1; }
         }
 
         div[data-testid="stAlert"] {
-            background-color: #B4EBE6 !important;
-            border-left: 5px solid #FFB433 !important;
+            background-color: #FEF3E2;
+            border-left: 5px solid #FAB12F;
             border-radius: 10px;
-            box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
-            animation: bounce 1.5s ease-in-out infinite alternate;
+            box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.2);
+            animation: bounce 1s ease-in-out infinite alternate;
         }
 
         div[data-testid="stAlert"] p {
-            color: black !important;
+            color: black;
         }
     </style>
 """, unsafe_allow_html=True)
 
 
 # 📂 Upload File
-uploaded_file = st.sidebar.file_uploader("📂 Pilih File Excel", type=".xlsx", help="Pastikan file yang diunggah dalam format .xlsx dengan data kurs jual rupiah.")
+uploaded_file = st.file_uploader("📂 Upload File Excel", type=".xlsx", help="Pastikan file yang diunggah dalam format .xlsx dengan data kurs jual rupiah.")
 
 if uploaded_file is None:
-    st.info("**Siapkan data historismu terlebih dahulu...** \n Kamu bisa mengambilnya dari situs resmi Bank Indonesia: [Kurs BI](https://www.bi.go.id/id/statistik/informasi-kurs/transaksi-bi/default.aspx)", icon="💡")
+    st.warning("Siapkan data historismu terlebih dahulu! Kamu bisa mengambilnya dari situs resmi Bank Indonesia: [Kurs BI](https://www.bi.go.id/id/statistik/informasi-kurs/transaksi-bi/default.aspx)", icon="💡")
     st.stop()
 
 df = load_data(uploaded_file)
@@ -248,8 +247,8 @@ df = load_data(uploaded_file)
 if df is None or df.empty:
     st.stop()
 
-with st.sidebar.expander("📌 Data yang Diupload", expanded=True):
-    st.sidebar.dataframe(df, width=900, height=400)
+with st.sidebar.subheader("📌 Data yang Diupload"):
+    st.sidebar.dataframe(df, width=2000, height=400)
 
 
 today = pd.Timestamp.today().date()
@@ -260,8 +259,10 @@ if today > last_data_date:
 else:
     start_date = last_data_date 
 # 📅 Input Tanggal untuk Prediksi
-start = st.sidebar.date_input("📅 Tanggal Mulai", value=start_date, disabled=True)
-end = st.sidebar.date_input("📅 Tanggal Selesai", value=None, min_value=start_date + pd.Timedelta(days=1))
+st.sidebar.subheader("📅 Input Tanggal untuk Prediksi")
+start = st.sidebar.date_input("Tanggal Mulai", value=start_date, disabled=True)
+end = st.sidebar.date_input("**Tanggal Selesai**", value=None, min_value=start_date + pd.Timedelta(days=1))
+
 
 if st.sidebar.button("🔮 Prediksi!", type="primary", use_container_width=True):
     if end is None:
@@ -275,4 +276,4 @@ if st.sidebar.button("🔮 Prediksi!", type="primary", use_container_width=True)
             evaluate_model(mae, rmse, mape_percentage)
             predict(start, end, df, model_fit)
         else:
-            st.error("Model gagal dilatih. Pastikan data cukup.")
+            st.warning("Model gagal dilatih. Pastikan data cukup.")
