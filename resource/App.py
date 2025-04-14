@@ -124,7 +124,7 @@ def evaluate_model(mae,rmse,mape_percentage):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-title">MAE (Mean Absolute Error)</div>
-            <div class="metric-value">{mae:.4f}</div>
+            <div class="metric-value">{mae:.1f}</div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -132,7 +132,7 @@ def evaluate_model(mae,rmse,mape_percentage):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-title">RMSE (Root Mean Squared Error)</div>
-            <div class="metric-value">{rmse:.4f}</div>
+            <div class="metric-value">{rmse:.1f}</div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -140,7 +140,7 @@ def evaluate_model(mae,rmse,mape_percentage):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-title">MAPE (Mean Absolute Percentage Error)</div>
-            <div class="metric-value">{mape_percentage:.4f}%</div>
+            <div class="metric-value">{mape_percentage:.1f}%</div>
         </div>
         """, unsafe_allow_html=True)
 
