@@ -118,9 +118,9 @@ def evaluate_model(mae, rmse, mape_percentage):
             }
 
             @media (prefers-color-scheme: dark) {
-                .metric-card { background: #2d2d2d !important; color: #f1f1f1 !important; }
-                .metric-title { color: #f1f1f1 !important; }
-                .metric-value { color: #FFA07A !important; }
+                .metric-card { background: #2d2d2d; color: #f1f1f1; }
+                .metric-title { color: #f1f1f1; }
+                .metric-value { color: #FFA07A; }
             }
         </style>
     """, unsafe_allow_html=True)
@@ -207,11 +207,11 @@ st.markdown("""
         }
 
         @media (prefers-color-scheme: dark) {
-            .card { background: #1e1e1e !important; color: #f1f1f1 !important; }
-            .highlight { color: #FF7B72 !important; }
-            section[data-testid="stSidebar"] { background-color: #2d2d2d !important; border-right: 1px solid #444 !important; }
-            div[data-testid="stAlert"] { background-color: #2d2d2d !important; border-left: 5px solid #FFB347 !important; }
-            div[data-testid="stAlert"] p { color: #f1f1f1 !important; }
+            .card { background: #1e1e1e; color: #f1f1f1; }
+            .highlight { color: #FF7B72; }
+            section[data-testid="stSidebar"] { background-color: #2d2d2d; border-right: 1px solid #444; }
+            div[data-testid="stAlert"] { background-color: #2d2d2d; border-left: 5px solid #FFB347; }
+            div[data-testid="stAlert"] p { color: #f1f1f1; }
             .element-container iframe { filter: invert(1) hue-rotate(180deg); }
         }
     </style>
