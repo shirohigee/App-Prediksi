@@ -56,8 +56,10 @@ def train_and_evaluate_model(df):
 
     mae = float(mean_absolute_error(actual_values, predictions))
     rmse = float(np.sqrt(mean_squared_error(actual_values, predictions)))
-    mean_actual = np.mean(actual_values)
-    mape_percentage = (mae / mean_actual) * 100
+    # mean_actual = np.mean(actual_values)
+    mape_percentage = np.mean(
+        np.abs(np.array(actual_values) - np.array(predictions)) / np.array(actual_values)
+    ) * 100
 
     return model_fit, mae, rmse, mape_percentage
 
